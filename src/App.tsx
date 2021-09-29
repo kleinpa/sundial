@@ -134,8 +134,11 @@ function SundialDisplay(props: SundialDisplayProps) {
           );
         })}
       </g>
-      <PolarTransform a={props.info.dawnPercent - 7 / 24} r={circle.r}>
-        <line y1={3} stroke={`black`} />
+      <PolarTransform a={props.info.dayPercent + 4 / 24} r={circle.r}>
+        <circle r=".5" fill={faceStroke} />
+      </PolarTransform>
+      <PolarTransform a={props.info.dayPercent + 8 / 24} r={circle.r}>
+        <circle r=".5" fill={faceStroke} />
       </PolarTransform>
       <PolarTransform a={0} r={circle.r}>
         <line y1={-3} stroke={faceStroke} />
