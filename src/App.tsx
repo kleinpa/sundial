@@ -51,32 +51,44 @@ interface SundialDisplayProps {
   illumination: number[];
 }
 function SundialDisplay(props: SundialDisplayProps) {
-  interface SemicircleProps {
-    cx: number;
-    cy: number;
-    r: number;
-    a1: number;
-    a2: number;
+  // overall size
+  const circle = {
+    x: 50,
+    y: 50,
+    r: 45,
+  };
 
+  function Section(props: {
+    r0: number; // revs
+    r1: number; // revs
+    a0: number;
+    a1: number;
     fill: string;
-  }
-  function Semicircle(props: SemicircleProps) {
-    const { cx, cy, r, a1, a2, ...rest } = props;
-    const a1x = cx + Math.sin(a1) * r;
-    const a1y = cy - Math.cos(a1) * r;
-    const a2x = cx + Math.sin(a2) * r;
-    const a2y = cy - Math.cos(a2) * r;
-    const large = a2 - a1 >= Math.PI ? "1" : "0";
-    const full = a2 - a1 >= Math.PI * 2;
-    if (full) {
-      return <circle cx={cx} cy={cy} r={r} {...rest} />;
+  }) {
+    const { r0: r0, r1: r1, a0: a0, a1: a1, ...rest } = props;
+
+    // The four 'corners' of this secton
+    function polar(a = 0, r = 0) {
+      return {
+        x: Math.sin(a * Math.PI * 2) * r,
+        y: -Math.cos(a * Math.PI * 2) * r,
+      };
     }
+    const a0r0 = polar(a0, r0);
+    const a1r0 = polar(a1, r0);
+    const a0r1 = polar(a0, r1);
+    const a1r1 = polar(a1, r1);
+
+    const large = a1 - a0 >= Math.PI ? "1" : "0";
     return (
       <path
         d={
-          `M ${cx} ${cy}` +
-          `L ${a1x} ${a1y}` +
-          `A ${r} ${r} 0 ${large} 1 ${a2x} ${a2y} ` +
+          `M ${circle.x + a1r0.x} ${circle.y + a1r0.y}` +
+          `A ${r0} ${r0} 0 ${large} 0` +
+          ` ${circle.x + a0r0.x} ${circle.y + a0r0.y} ` +
+          `L ${circle.x + a0r1.x} ${circle.y + a0r1.y}` +
+          `A ${r1} ${r1} 0 ${large} 1` +
+          ` ${circle.x + a1r1.x} ${circle.y + a1r1.y} ` +
           `Z`
         }
         {...rest}
@@ -84,71 +96,103 @@ function SundialDisplay(props: SundialDisplayProps) {
     );
   }
   const slices = props.illumination;
-  const sliceAngle = (Math.PI * 2) / slices.length;
 
-  const cx = 50;
-  const cy = 50;
-  const r = 45;
-
-  const face = slices.map((v, i) => {
-    const rgb = sunAngleToColor(v);
+  interface PolarTransformProps {
+    r: number; // revs
+    a: number;
+  }
+  // Position an object at a position around the circle
+  function PolarTransform(props: React.PropsWithChildren<PolarTransformProps>) {
     return (
-      <Semicircle
-        cx={cx}
-        cy={cy}
-        r={r}
-        a1={sliceAngle * i}
-        a2={sliceAngle * (i + 1)}
-        //a2={Math.PI * 2}
-        fill={`rgb(${rgb.r},${rgb.g},${rgb.b})`}
-        key={i}
-      />
+      <g
+        transform={
+          `rotate(${props.a * 360} ${circle.x} ${circle.y})` +
+          `translate(${circle.x} ${circle.y - props.r})`
+        }
+      >
+        {props.children}
+      </g>
     );
-  });
+  }
 
-  const nowa = props.info.dayPercent * 2 * Math.PI;
-  const nowx = cx + Math.sin(nowa) * r;
-  const nowy = cy - Math.cos(nowa) * r;
   const faceStroke = `currentColor`;
   const rgb = sunAngleToColor((props.info.sunAngle * 180) / Math.PI);
   return (
-    <svg viewBox="0 0 100 100" className="Dial">
+    <svg viewBox="0 0 100 100" className="SundialDisplay">
       <g shapeRendering="crispEdges" clipPath="circle(50%)">
-        {face}
+        {slices.map((v, i) => {
+          const rgb = sunAngleToColor(v);
+          return (
+            <Section
+              r0={0}
+              r1={circle.r}
+              a0={(1 / slices.length) * i}
+              a1={(1 / slices.length) * (i + 1)}
+              fill={`rgb(${rgb.r},${rgb.g},${rgb.b})`}
+              key={i}
+            />
+          );
+        })}
       </g>
-      <rect
-        x={cx - 0.5}
-        y={cy - r - 3}
-        height={3}
-        width={1}
-        transform={`rotate(${props.info.dawnPercent * 360} ${cx} ${cy})`}
-        fill={faceStroke}
-      />
-      <rect
-        x={cx - 0.5}
-        y={cy - r - 3}
-        height={3}
-        width={1}
-        transform={`rotate(${props.info.duskPercent * 360} ${cx} ${cy})`}
-        fill={faceStroke}
-      />
-      <rect
-        x={cx - 0.5}
-        y={cy - r - 3}
-        height={3}
-        width={1}
-        transform={`rotate(${0 * 360} ${cx} ${cy})`}
-        fill={faceStroke}
-      />
-      {/* <circle cx={cx} cy={cy} r={r} stroke={faceStroke} fill="none" /> */}
-      <circle
-        cx={nowx}
-        cy={nowy}
-        r="2"
-        fill={`rgb(${rgb.r},${rgb.g},${rgb.b})`}
-        stroke={faceStroke}
-      />
+      <PolarTransform a={props.info.dawnPercent - 7 / 24} r={circle.r}>
+        <line y1={3} stroke={`black`} />
+      </PolarTransform>
+      <PolarTransform a={0} r={circle.r}>
+        <line y1={-3} stroke={faceStroke} />
+      </PolarTransform>
+      <PolarTransform a={props.info.duskPercent} r={circle.r}>
+        <line y1={-3} stroke={faceStroke} />
+      </PolarTransform>
+      <PolarTransform a={props.info.dawnPercent} r={circle.r}>
+        <line y1={-3} stroke={faceStroke} />
+      </PolarTransform>
+      <PolarTransform a={props.info.dayPercent} r={circle.r}>
+        <circle
+          r="2"
+          fill={`rgb(${rgb.r},${rgb.g},${rgb.b})`}
+          stroke={faceStroke}
+        />
+      </PolarTransform>
     </svg>
+  );
+}
+interface SundialProps {
+  // Date as milliseconds since UNIX epoch
+  date: number;
+
+  location: Coordinates;
+}
+export function Sundial(props: SundialProps): JSX.Element {
+  const times = suncalc.getTimes(
+    new Date(props.date),
+    props.location.latitude,
+    props.location.longitude
+  );
+  const dayPercent =
+    ((props.date - times.solarNoon.getTime()) / msInDay + 1) % 1;
+  // sun percentage is the time between civil dawn and dusk as percentage of day
+
+  const dawnPercent =
+    (times.dawn.getTime() - times.solarNoon.getTime() + 1) / msInDay;
+  const duskPercent =
+    (times.dusk.getTime() - times.solarNoon.getTime()) / msInDay;
+  const sunAngle = suncalc.getPosition(
+    new Date(props.date),
+    props.location.latitude,
+    props.location.longitude
+  ).altitude;
+  const info = {
+    dayPercent: dayPercent,
+    dawnPercent: dawnPercent,
+    duskPercent: duskPercent,
+    sunAngle: sunAngle,
+  };
+  const slices = sunAngleSlices(props.location, times.solarNoon);
+
+  return (
+    <div className="App">
+      <SundialDisplay info={info} illumination={slices} />
+    </div>
   );
 }
 export default function App(): JSX.Element {
@@ -172,34 +216,5 @@ export default function App(): JSX.Element {
     return <div>waiting for location</div>;
   }
 
-  const times = suncalc.getTimes(
-    new Date(date),
-    location.latitude,
-    location.longitude
-  );
-  const dayPercent = ((date - times.solarNoon.getTime()) / msInDay + 1) % 1;
-  // sun percentage is the time between civil dawn and dusk as percentage of day
-
-  const dawnPercent =
-    (times.dawn.getTime() - times.solarNoon.getTime() + 1) / msInDay;
-  const duskPercent =
-    (times.dusk.getTime() - times.solarNoon.getTime()) / msInDay;
-  const sunAngle = suncalc.getPosition(
-    new Date(date),
-    location.latitude,
-    location.longitude
-  ).altitude;
-  const info = {
-    dayPercent: dayPercent,
-    dawnPercent: dawnPercent,
-    duskPercent: duskPercent,
-    sunAngle: sunAngle,
-  };
-  const slices = sunAngleSlices(location, times.solarNoon);
-
-  return (
-    <div className="App">
-      <SundialDisplay info={info} illumination={slices} />
-    </div>
-  );
+  return <Sundial location={location} date={date} />;
 }
