@@ -1,10 +1,12 @@
-/// <reference types="react-scripts" />
+/// <reference types="vite/client" />
 
-declare namespace NodeJS {
-  export interface ProcessEnv {
-    REACT_APP_API_URL: string;
-    REACT_APP_GA_TRACKING_ID: string;
-    REACT_APP_VERSION: string;
-    REACT_APP_NAME: string;
-  }
+interface ImportMetaEnv {
+  readonly VITE_API_URL: string;
+  readonly VITE_GA_TRACKING_ID: string;
+  readonly VITE_VERSION: string;
+  readonly VITE_NAME: string;
+}
+
+interface ImportMeta {
+  readonly env: ImportMetaEnv;
 }

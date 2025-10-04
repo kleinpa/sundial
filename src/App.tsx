@@ -165,7 +165,7 @@ interface SundialProps {
 
   location: Coordinates;
 }
-export function Sundial(props: SundialProps): JSX.Element {
+export function Sundial(props: SundialProps) {
   const times = suncalc.getTimes(
     new Date(props.date),
     props.location.latitude,
@@ -198,7 +198,7 @@ export function Sundial(props: SundialProps): JSX.Element {
     </div>
   );
 }
-export default function App(): JSX.Element {
+export default function App() {
   const [date, setDate] = useState<number>(Date.now());
   const [location, setLocation] = useState<Coordinates | undefined>(undefined);
 

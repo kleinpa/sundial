@@ -1,0 +1,5 @@
+{
+	"postCreateCommand": "pnpm install",
+	"name": "Node.js",
+	"image": "mcr.microsoft.com/devcontainers/javascript-node:4-22-bookworm"
+}
