@@ -1,7 +1,7 @@
 {
   "name": "sundial",
   "version": "0.1.0",
-  "packageManager": "pnpm@10.20.0",
+  "packageManager": "pnpm@10.23.0",
   "private": true,
   "dependencies": {
     "@testing-library/jest-dom": "^6.9.1",
